@@ -2,6 +2,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include "ui_JSPFileReader.h"
+#include<Reader.h>
 
 class JSPFileReader : public QMainWindow
 {
@@ -12,4 +13,5 @@ public:
 
 private:
     Ui::JSPFileReaderClass ui;
+	Reader* reader;
 };

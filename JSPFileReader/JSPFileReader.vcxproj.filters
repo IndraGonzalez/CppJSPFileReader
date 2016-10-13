@@ -43,6 +43,12 @@
     <ClCompile Include="qrc_JSPFileReader.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="moc_Reader.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="JSPFileReader.h">
@@ -53,6 +59,9 @@
     </CustomBuild>
     <CustomBuild Include="JSPFileReader.qrc">
       <Filter>Resource Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Reader.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
