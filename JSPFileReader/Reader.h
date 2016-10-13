@@ -18,7 +18,7 @@ private:
 	QFile *file;
 	QDataStream *in;
 	typedef unsigned short Crc16;
-	struct NT
+	struct NP
 	{
 		int timeHour;
 		int timeMin;
@@ -38,13 +38,8 @@ private:
 
 		int cs;
 	};
-	NT nt;
-	QList<NT> nts;
-	
-	Crc16 crc16(Crc16 crc, void const* src, int cnt);
-	void crc16init(void);
-	bool calculateChecksum();
-	u1 cs(u1 const* src, int count);
+	NP np;
+	QList<NP> nps;
 
 	void readPackage(QFile *file, QDataStream *in, int goForward);
 	void readTime(QFile *file, QDataStream *in);
