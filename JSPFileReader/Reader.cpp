@@ -18,52 +18,27 @@ void Reader::run()
 	
 	crc16init();
 	
-	if (file->open(QIODevice::ReadOnly)) 
+	if (file->open(QIODevice::ReadOnly))
 	{
-		char *type1 = new char[1];
-		char *type2 = new char[1];
-		
 		in = new QDataStream(file);
 		in->setByteOrder(QDataStream::LittleEndian);
-		
+
 		while (!in->atEnd())
 		{
+			char *type1 = new char[1];
+			char *type2 = new char[1];
 			in->readRawData(type1, 1);
 			in->readRawData(type2, 1);
-		
-			if((*type1 == 'N') && (*type2 == 'P'))
+
+			if (*type1 == 'N' && *type2 == 'P')
 			{
-				int pos = file->pos();
-				int goBack = pos+4;
-				
-				/*QByteArray size(3,'0');
-				in->readRawData(size.data(), 3);
-				
+				int goBack = file->pos() + 4;
+
+				QByteArray strSize(3, '0');
+				in->readRawData(strSize.data(), 3);
 				bool ok;
-				size.toInt(&ok,16);*/
+				int size = strSize.toInt(&ok, 16);
 
-
-				char *size1 = new char[1];
-				char *size2 = new char[1];
-				char *size3 = new char[1];
-
-				in->readRawData(size1, 1);
-				in->readRawData(size2, 1);
-				in->readRawData(size3, 1);
-
-				QChar csize1(*size1);
-				QChar csize2(*size2);
-				QChar csize3(*size3);
-
-				QString strSize;
-				strSize.append(csize1);
-				strSize.append(csize2);
-				strSize.append(csize3);
-				bool ok;
-				int size = strSize.toInt(&ok,16);
-				//int size = calculateValue(*size1,*size2,*size3);
-
-				pos = file->pos();
 				int goForward = file->pos() + size - 3;
 				file->seek(goForward);
 
@@ -71,104 +46,143 @@ void Reader::run()
 				in->readRawData(at, 1);
 				if (*at == '@')
 				{
-					char *cs1 = new char[1];
-					char *cs2 = new char[1];
-					in->readRawData(cs1, 1);
-					in->readRawData(cs2, 1);
-					nt.cs = calculateValue(*cs1, *cs2);
+					QByteArray strCS(2, '0');
+					in->readRawData(strCS.data(), 2);
+					bool ok;
+					nt.cs = strCS.toInt(&ok, 16);
 
-					bool check = calculateChecksum();
+					//bool check = calculateChecksum();
+
+					bool check = cs();
 
 					//if (check) 
-					if(true)
+					if (true)
 					{
 						file->seek(goBack);
-						readPackage(file,in);
+						readPackage(file, in, goForward);
 					}
 				}
+				delete at;
 			}
+			delete type1, type2;
 		}
 		qDebug() << file->pos() << endl;
 		file->close();
+		delete in;
 	}
+	delete file;
 }
 
 
-void Reader::readPackage(QFile *file, QDataStream *in)
+void Reader::readPackage(QFile *file, QDataStream *in, int goForward)
 {
-	qDebug() << "Estoy leyendo el paquete";
+	//qDebug() << "Estoy leyendo el paquete";
 
-	// Saltar hasta el marcador de válido
-	int pos = file->pos() + 7;
-	file->seek(pos);
+	// Saltar hasta el marcador de válido (tamaño fijo)
+	file->seek(file->pos() + 7);
 
 	char *valid = new char[1];
 	in->readRawData(valid, 1);
-	if (*valid == 'V')
-	{
-		file->seek(file->pos() + 1);
-		*in >> nt.time[1];
-		*in >> nt.time[2];
-		*in >> nt.time[3];
-	}
+	file->seek(file->pos() + 1);
+	
+	if (*valid == 'V') 
+		readTime(file, in);
 	else
-	{
-		file->seek(file->pos() + 10);
-	}
+		goToNextField(file,in);
 
-	file->seek(file->pos() + 12);
+	for (int i = 0; i < 5; i++) goToNextField(file,in);
 
-	*in >> nt.ns;
-	*in >> nt.latitudeD;
-	*in >> nt.latitudeM;
-	*in >> nt.latitudeS;
-	*in >> nt.ew;
-	*in >> nt.longitudeD;
-	*in >> nt.longitudeM;
-	*in >> nt.longitudeS;
-
+	readCoordinates(file, in);
+	
 	nts.append(nt);
+
+	file->seek(goForward + 3);
+	delete valid;
 }
 
-int Reader::calculateValue(char value1, char value2, char value3)
-{
-	int num1 = getValue(value1);
-	int num2 = getValue(value2);
-	int num3 = getValue(value3);
-	return (num1 * pow(16,2)) + (num2 * 16) + num3;
+void Reader::readTime(QFile *file, QDataStream *in) {
+	bool ok;
+	QByteArray time(2, '0');
+
+	in->readRawData(time.data(), 2);
+	nt.timeHour = time.toInt(&ok, 10);
+
+	in->readRawData(time.data(), 2);
+	nt.timeMin = time.toInt(&ok, 10);
+
+	QByteArray timeSec(5, '0');
+	in->readRawData(timeSec.data(), 5);
+	nt.timeSec = timeSec.toDouble();
+	file->seek(file->pos() + 1);
 }
 
-int Reader::calculateValue(char value1, char value2)
+void Reader::goToNextField(QFile * file, QDataStream * in)
 {
-	int num1 = getValue(value1);
-	int num2 = getValue(value2);
-	return (num1 * 16) + num2;
-}
-
-int Reader::getValue(char value) 
-{
-	switch (value)
-	{
-		case '0': return 0;
-		case '1': return 1;
-		case '2': return 2;
-		case '3': return 3;
-		case '4': return 4;
-		case '5': return 5;
-		case '6': return 6;
-		case '7': return 7;
-		case '8': return 8;
-		case '9': return 9;
-		case 'A': return 10;
-		case 'B': return 11;
-		case 'C': return 12;
-		case 'D': return 13;
-		case 'E': return 14;
-		case 'F': return 15;
+	bool stop = false;
+	char *next = new char[1];
+	while (!stop) {
+		int pos = file->pos();
+		in->readRawData(next, 1);
+		if (*next == ',') 
+			stop = true;
 	}
-	return 0;
+	delete next;
 }
 
+void Reader::readCoordinates(QFile * file, QDataStream * in)
+{
+	char *charNS = new char[1];
+	in->readRawData(charNS, 1);
+	QChar ns(*charNS);
+	nt.ns = ns;
+
+	bool ok;
+	QByteArray latitude(2, '0');
+	in->readRawData(latitude.data(), 2);
+	nt.latitudeD = latitude.toInt(&ok, 10);
+
+	file->seek(file->pos() + 1);
+
+	in->readRawData(latitude.data(), 2);
+	nt.latitudeM = latitude.toInt(&ok, 10);
+
+	file->seek(file->pos() + 1);
+
+	QByteArray latitudeSec(9, '0');
+	in->readRawData(latitudeSec.data(), 9);
+	nt.latitudeS = latitudeSec.toDouble();
+
+	file->seek(file->pos() + 2);
+
+	char *charEW = new char[1];
+	in->readRawData(charEW, 1);
+	QChar ew(*charEW);
+	nt.ew = ew;
+
+	QByteArray longitudeDeg(3, '0');
+	in->readRawData(longitudeDeg.data(), 3);
+	nt.longitudeD = longitudeDeg.toInt(&ok, 10);
+
+	file->seek(file->pos() + 1);
+
+	QByteArray longitudeMin(2, '0');
+	in->readRawData(longitudeMin.data(), 2);
+	nt.longitudeM = longitudeMin.toInt(&ok, 10);
+
+	file->seek(file->pos() + 1);
+
+	QByteArray longitudeSec(9, '0');
+	in->readRawData(longitudeSec.data(), 9);
+	nt.longitudeS = longitudeSec.toDouble();
+
+	file->seek(file->pos() + 3);
+
+	QByteArray altitude(10, '0');
+	in->readRawData(altitude.data(), 10);
+	nt.altitude = altitude.toDouble();
+
+	delete charEW, charNS;
+}
 
 bool Reader::calculateChecksum()
 {
@@ -177,6 +191,25 @@ bool Reader::calculateChecksum()
 	crc = crc16(crc, block, 1 + 2 + 512);
 	return (crc == nt.cs);
 }
+
+
+typedef unsigned char u1;
+enum {
+	bits = 8,
+	lShift = 2,
+	rShift = bits - lShift
+};
+
+#define ROT_LEFT(val) ((val << lShift) | (val >> rShift))
+
+u1 Reader::cs(u1 const* src, int count)
+{
+	u1 res = 0;
+	while (count--)
+		res = ROT_LEFT(res) ^ *src++;
+	return ROT_LEFT(res);
+}
+
 
 typedef unsigned short Crc16;
 enum {
