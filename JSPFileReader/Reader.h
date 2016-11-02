@@ -51,6 +51,7 @@ private:
 	void goToNextField(QFile *file, QDataStream *in);
 	void readCoordinates(QFile *file, QDataStream *in);
 	void writeDataFile();
+	int getDayOfWeek(int year, int month, int day);
 	
 protected:
 	void run() Q_DECL_OVERRIDE;

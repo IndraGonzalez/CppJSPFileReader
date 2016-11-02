@@ -2,6 +2,8 @@
 #include<qfile.h>
 #include<qdatastream.h>
 #include<qdebug.h>
+#include <stdio.h>
+#include <time.h>
 
 Reader::Reader(QObject *parent)
 	: QThread(parent)
@@ -94,6 +96,11 @@ void Reader::readTime(QFile *file, QDataStream *in) {
 	bool ok;
 	QByteArray time(2, '0');
 
+	int year = 2016;
+	int month = 8;
+	int day = 9;
+	int daysOfWeek = getDayOfWeek(year,month,day);
+
 	in->readRawData(time.data(), 2);
 	np.timeHour = time.toInt(&ok, 10);
 
@@ -105,7 +112,7 @@ void Reader::readTime(QFile *file, QDataStream *in) {
 	np.timeSec = timeSec.toDouble();
 	file->seek(file->pos() + 1);
 
-	np.time = (np.timeHour * 60 * 60) + (np.timeMin * 60) + np.timeSec;
+	np.time = (daysOfWeek*24*60*60) + (np.timeHour * 60 * 60) + (np.timeMin * 60) + np.timeSec;
 }
 
 void Reader::goToNextField(QFile * file, QDataStream * in)
@@ -208,4 +215,14 @@ void Reader::writeDataFile() {
 	}
 	qDebug() << nps.length() << endl;
 	file.close();
+}
+
+int Reader::getDayOfWeek(int year, int month, int day) {
+	tm timeStruct = {};
+	timeStruct.tm_year = year - 1900;
+	timeStruct.tm_mon = month - 1;
+	timeStruct.tm_mday = day;
+	timeStruct.tm_hour = 12;    //  To avoid any doubts about summer time, etc.
+	mktime(&timeStruct);
+	return timeStruct.tm_wday;
 }
