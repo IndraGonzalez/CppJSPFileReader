@@ -26,7 +26,7 @@ void Reader::run()
 			char *type2 = new char[1];
 			in->readRawData(type1, 1);
 			in->readRawData(type2, 1);
-			
+
 			if (*type1 == 'N' && *type2 == 'P')
 			{
 				int start = file->pos();

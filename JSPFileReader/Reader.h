@@ -10,7 +10,6 @@ class Reader : public QThread
 
 public:
 	Reader(QObject *parent);
-	~Reader();
 
 	
 private:
@@ -24,15 +23,21 @@ private:
 		int timeMin;
 		double timeSec;
 
+		double time;
+
 		QChar ns;
 		int latitudeD;
 		int latitudeM;
 		double latitudeS;
 
+		double latitude;
+
 		QChar ew;
 		int longitudeD;
 		int longitudeM;
 		double longitudeS;
+
+		double longitude;
 
 		double altitude;
 
@@ -45,6 +50,7 @@ private:
 	void readTime(QFile *file, QDataStream *in);
 	void goToNextField(QFile *file, QDataStream *in);
 	void readCoordinates(QFile *file, QDataStream *in);
+	void writeDataFile();
 	
 protected:
 	void run() Q_DECL_OVERRIDE;
