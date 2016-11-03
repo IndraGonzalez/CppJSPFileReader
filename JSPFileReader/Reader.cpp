@@ -25,38 +25,42 @@ void Reader::run()
 		while (!in->atEnd())
 		{
 			char *type1 = new char[1];
-			char *type2 = new char[1];
 			in->readRawData(type1, 1);
-			in->readRawData(type2, 1);
 			
-			if (*type1 == 'N' && *type2 == 'P')
+			if (*type1 == 'N')
 			{
-				int start = file->pos();
-				int goBack = file->pos() + 4;
+				char *type2 = new char[1];
+				in->readRawData(type2, 1);
+				if (*type2 == 'P') {
+					char *type2 = new char[1];
+					int start = file->pos();
+					int goBack = file->pos() + 4;
 
-				QByteArray strSize(3, '0');
-				in->readRawData(strSize.data(), 3);
-				bool ok;
-				int size = strSize.toInt(&ok, 16);
-
-				int goForward = file->pos() + size - 3;
-				file->seek(goForward);
-
-				char *at = new char[1];
-				in->readRawData(at, 1);
-				if (*at == '@')
-				{
-					QByteArray strCS(2, '0');
-					in->readRawData(strCS.data(), 2);
+					QByteArray strSize(3, '0');
+					in->readRawData(strSize.data(), 3);
 					bool ok;
-					np.cs = strCS.toInt(&ok, 16);
+					int size = strSize.toInt(&ok, 16);
 
-					file->seek(goBack);
-					readPackage(file, in, goForward);
+					int goForward = file->pos() + size - 3;
+					file->seek(goForward);
+
+					char *at = new char[1];
+					in->readRawData(at, 1);
+					if (*at == '@')
+					{
+						QByteArray strCS(2, '0');
+						in->readRawData(strCS.data(), 2);
+						bool ok;
+						np.cs = strCS.toInt(&ok, 16);
+
+						file->seek(goBack);
+						readPackage(file, in, goForward);
+					}
+					delete at;
 				}
-				delete at;
+				delete type2;
 			}
-			delete type1, type2;
+			delete type1;
 		}
 		//qDebug() << file->pos() << endl;
 		file->close();
@@ -190,6 +194,11 @@ void Reader::readCoordinates(QFile * file, QDataStream * in)
 	in->readRawData(altitude.data(), 10);
 	np.altitude = altitude.toDouble();
 
+	EpsgConversor conversor(NULL);
+	double xOut, yOut;
+	conversor.transformCoordinates(np.longitude, np.latitude, xOut, yOut);
+	np.latitude = xOut;
+	np.longitude = yOut;
 	delete charEW, charNS;
 }
 
@@ -213,7 +222,7 @@ void Reader::writeDataFile() {
 			out << nps[i].altitude << endl;
 		}
 	}
-	qDebug() << nps.length() << endl;
+	//qDebug() << nps.length() << endl;
 	file.close();
 }
 
@@ -222,7 +231,7 @@ int Reader::getDayOfWeek(int year, int month, int day) {
 	timeStruct.tm_year = year - 1900;
 	timeStruct.tm_mon = month - 1;
 	timeStruct.tm_mday = day;
-	timeStruct.tm_hour = 12;    //  To avoid any doubts about summer time, etc.
+	timeStruct.tm_hour = 12;
 	mktime(&timeStruct);
 	return timeStruct.tm_wday;
 }

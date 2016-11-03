@@ -49,6 +49,12 @@
     <ClCompile Include="Reader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="moc_EpsgConversor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EpsgConversor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="JSPFileReader.h">
@@ -61,6 +67,9 @@
       <Filter>Resource Files</Filter>
     </CustomBuild>
     <CustomBuild Include="Reader.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="EpsgConversor.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QThread>
 #include <QFile>
+#include <EpsgConversor.h>
 
 class Reader : public QThread
 {
