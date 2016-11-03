@@ -14,7 +14,7 @@ void Reader::run()
 	/*
 	No funciona el checksum (el método)
 	*/
-	QString path = "//srv01/PracticasProgramacion/Datos/Kalman/20160809_141551.JPS";
+	QString path = "//srv01/PracticasProgramacion/Datos/Kalman/Set2/20160614_082114.jps";
 	file = new QFile(path);
 	
 	if (file->open(QIODevice::ReadOnly))
@@ -101,8 +101,8 @@ void Reader::readTime(QFile *file, QDataStream *in) {
 	QByteArray time(2, '0');
 
 	int year = 2016;
-	int month = 8;
-	int day = 9;
+	int month = 6;
+	int day = 14;
 	int daysOfWeek = getDayOfWeek(year,month,day);
 
 	in->readRawData(time.data(), 2);
@@ -155,7 +155,7 @@ void Reader::readCoordinates(QFile * file, QDataStream * in)
 	in->readRawData(latitudeSec.data(), 9);
 	np.latitudeS = latitudeSec.toDouble();
 
-	np.latitude = np.latitudeD + (np.latitudeM/60) + (np.latitudeS/3600);
+	np.latitude = np.latitudeD + ((double)np.latitudeM/60) + (np.latitudeS/3600);
 	if (np.ns == 'S') {
 		np.latitude *= -1;
 	}
@@ -183,7 +183,7 @@ void Reader::readCoordinates(QFile * file, QDataStream * in)
 	in->readRawData(longitudeSec.data(), 9);
 	np.longitudeS = longitudeSec.toDouble();
 
-	np.longitude = np.longitudeD + (np.longitudeM / 60) + (np.longitudeS / 3600);
+	np.longitude = np.longitudeD + ((double)np.longitudeM / 60) + (np.longitudeS / 3600);
 	if (np.ew == 'W') {
 		np.longitude *= -1;
 	}
